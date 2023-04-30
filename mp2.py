@@ -6,7 +6,6 @@ class Process:
         self._priority = priority
         self._waiting_time = 0
         self._turnaround_time = 0
-        self._is_complete = False
         
     def decrement(self):
         self._burst -= 1
@@ -16,7 +15,10 @@ class Process:
     
     def set_turnaround_time(self, time: int):
         self._turnaround_time = time
-        
+    
+    def is_complete(self):
+        return self._burst <= 0 
+    
     def __repr__(self):
         return "PROCESS ID: %d\nARRIVAL: %d\nBURST: %d\nPRIORITY: %d\nWAITING TIME: %d\nTURNAROUND TIME: %d\n\n" % (self._id, self._arrival, self._burst, self._priority, self._waiting_time, self._turnaround_time)
         
@@ -28,6 +30,9 @@ class Scheduling:
         self._curr_turnaround_time = 0
         self._total_waiting_time = 0
         self._total_turnaround_time = 0        
+    
+    def set_processes(self, processes: list):
+        return [Process(*process_data) for process_data in processes]
     
     def set_curr_waiting_time(self, time: int):
         self._curr_waiting_time = time
@@ -54,7 +59,8 @@ class FCFS(Scheduling):
         super().__init__()
         
     def compute(self, processes: list):
-        self._processes = processes
+        self._processes = self.set_processes(processes)
+        
         for process in self._processes:
             waiting_time = self._curr_turnaround_time
             process.set_waiting_time(waiting_time)        
@@ -70,6 +76,7 @@ class SJF(Scheduling):
         super().__init__()
 
     def compute(self, processes: list):
+        processes = self.set_processes(processes)
         self._processes = sorted(processes, key=self._sort)
         
         for process in self._processes:
@@ -82,7 +89,6 @@ class SJF(Scheduling):
             self.set_curr_turnaround_time(turnaround_time)   
             
         self._processes = sorted(processes, key=lambda process: process._id)
-        # print(self._processes)
     
     def _sort(self, process):        
         return (process._burst, process._arrival, process._id)
@@ -125,8 +131,7 @@ class Priority(Scheduling):
             process.set_turnaround_time(turnaround_time)
             self.set_curr_turnaround_time(turnaround_time)   
             
-        # self._processes = sorted(processes, key=lambda process: process._id)
-        print(self._processes)
+        self._processes = sorted(processes, key=lambda process: process._id)
     
     def _sort(self, process):        
         return (process._priority, process._id)
@@ -138,24 +143,28 @@ class RoundRobin(Scheduling):
 
     def compute(self, processes: list):
         self._processes = processes
-                
-        while not self._is_done():
-            for process in self._processes:
-                waiting_time = self._curr_turnaround_time
-                process.set_waiting_time(waiting_time)        
-                self.set_curr_waiting_time(waiting_time)
-                
-                if process._burst >= 4:
-                    turnaround_time = self._curr_waiting_time + process._burst 
-                    process.set_turnaround_time(turnaround_time)
-                    self.set_curr_turnaround_time(turnaround_time)  
-                else:                    
-                    turnaround_time = self._curr_waiting_time + process._burst 
+        processes_copy = processes
+        
+        while len(processes_copy):
+            for process in processes_copy:
+                if process.is_complete():
+                    processes_copy.remove(process)                
+                else:                
+                    waiting_time = self._curr_turnaround_time
+                    process.set_waiting_time(waiting_time)        
+                    self.set_curr_waiting_time(waiting_time)
+                    
+                    if process._burst >= 4:
+                        turnaround_time = self._curr_waiting_time + process._burst 
+                        process.set_turnaround_time(turnaround_time)
+                        self.set_curr_turnaround_time(turnaround_time)  
+                    else:                    
+                        turnaround_time = self._curr_waiting_time + process._burst 
             
     
     def _is_done(self):
         for process in self._processes:
-            if process._is_complete:
+            if process.is_complete():
                 return False     
                
         return True
@@ -171,10 +180,9 @@ def main():
     # Process 1
     file1 = open('process1.txt', 'r')
     file2 = open('process2.txt', 'r')
+    test = open('sjftest.txt', 'r')
     
-    files = [file1
-             ]
-    file1.readline() # Skip the header
+    files = [test]
     
     fcfs = FCFS()
     sjf = SJF()
@@ -185,11 +193,12 @@ def main():
     processes = []
     
     for file in files:
+        file.readline() # Skip the header
         for line in file:
             process_id, arrival, burst, priority_num = map(int, line.split())
             # print("PROCESS ID:", process_id, "ARRIVAL:", arrival, "BURST:", burst, "PRIORITY:", priority)      
-            process = Process(process_id, arrival, burst, priority_num)  
-            processes.append(process)
+            process_data = [process_id, arrival, burst, priority_num]
+            processes.append(process_data)
             # fcfs.add_process(Process(process_id, arrival, burst, priority))
             # sjf.add_process(Process(process_id, arrival, burst, priority))
             # print(line)
@@ -201,12 +210,12 @@ def main():
     fcfs.compute(processes)     
     sjf.compute(processes)     
     # srpt.compute(processes)     
-    priority.compute(processes)     
+    # priority.compute(processes)     
     # round_robin.compute(processes)     
     
-    # fcfs.display()
-    # sjf.display()    
-    priority.display()    
+    fcfs.display()
+    sjf.display()    
+    # priority.display()    
     
     return
 
