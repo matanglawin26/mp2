@@ -1,0 +1,5 @@
+Process Burst Time Priority
+1   0   8   0
+2   1   4   1
+3   2   9   1
+4   3   5   1
