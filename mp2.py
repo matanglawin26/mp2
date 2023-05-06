@@ -122,8 +122,7 @@ class FCFS(Scheduling):
             self._gantt.add_job({ "process_id": process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time }) 
             
         return self   
-             
-
+    
 class SJF(Scheduling):
     def __init__(self):
         super().__init__()
@@ -158,6 +157,35 @@ class SRPT(Scheduling):
         self._clock = 0
             
     def compute(self, processes: list):
+        processes = self.set_processes(processes)
+        processes = sorted(processes, key=lambda process: process._id)
+        self._processes = processes
+        curr_process = None
+        
+        while not self.is_finished():
+            for process in processes:
+                if process._arrival == self._clock:
+                    self._arrived.append(process)
+                    
+            self._arrived = sorted(self._arrived, key=self._sort)
+            if curr_process is None: 
+                curr_process = self._arrived[0]
+            
+            if curr_process != self._arrived[0]:
+                print("DILI NA PAREHAS!") # Continue here
+                
+                # if self._arrived[0]._remaining_time < curr_process._remaining_time - self._clock:
+                #     self._add_queue({ "id":curr_process._id, "burst": curr_process._remaining_time})
+                #     curr_process = self._arrived[0]
+
+            
+            
+            curr_process.decrement()
+            self._clock += 1
+                
+        return self   
+            
+    def compute2(self, processes: list):
         processes = self.set_processes(processes)
         processes = sorted(processes, key=lambda process: process._id)
         self._processes = processes
@@ -295,9 +323,9 @@ def main():
     # Process 1
     file1 = open('process1.txt', 'r')
     file2 = open('process2.txt', 'r')
-    test = open('srpttest2.txt', 'r')
+    test = open('srpttest.txt', 'r')
     
-    files = [file2]
+    files = [test]
     
     for file in files:
         fcfs = FCFS()
