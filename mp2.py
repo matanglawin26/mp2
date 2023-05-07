@@ -99,6 +99,14 @@ class Scheduling:
         return total_time
 
     def display(self):
+        print("-" * 38 + " " +
+              self._title + " " + 38 * "-")
+
+        # Display Gantt Chart here
+        self._gantt.show()
+        
+        print("-" * 38 + " Table " + 38 * "-")
+        
         print('{:<10} {:<12} {:<18} {:<12} {:<16} {:<20}'.format(*self._headers))
         for process in self._processes:
             print('{:<10} {:<12} {:<18} {:<12} {:<16} {:<20}'.format(process._id, process._arrival,
@@ -115,11 +123,13 @@ class Scheduling:
         print("Average waiting time: %.2f ms" % self._average_waiting_time)
         print("Average turnaround time: %.2f ms" %
               self._average_turnaround_time)
+        print("\n")
 
 
 class FCFS(Scheduling):
     def __init__(self):
         super().__init__()
+        self._title = "FCFS"
 
     def compute(self, processes: list):
         self._processes = self.set_processes(processes)
@@ -142,6 +152,7 @@ class FCFS(Scheduling):
 class SJF(Scheduling):
     def __init__(self):
         super().__init__()
+        self._title = "SJF"
 
     def compute(self, processes: list):
         processes = self.set_processes(processes)
@@ -170,6 +181,7 @@ class SJF(Scheduling):
 class SRPT(Scheduling):
     def __init__(self):
         super().__init__()
+        self._title = "SRPT"
         self._arrived = []
         self._clock = 0
 
@@ -229,6 +241,7 @@ class SRPT(Scheduling):
 class Priority(Scheduling):
     def __init__(self):
         super().__init__()
+        self._title = "Priority"
 
     def compute(self, processes: list):
         processes = self.set_processes(processes)
@@ -257,9 +270,10 @@ class Priority(Scheduling):
 class RoundRobin(Scheduling):
     def __init__(self):
         super().__init__()
+        self._title = "Round Robin"
         self._clock = 0
         self._queue = []
-        self._quantum = 4
+        self._quantum = 2
 
     def compute(self, processes: list):
         processes = self.set_processes(processes)
@@ -302,28 +316,6 @@ class RoundRobin(Scheduling):
 
         return self
 
-    def compute2(self, processes: list):
-        self._processes = processes
-        processes_copy = processes
-
-        while len(processes_copy):
-            for process in processes_copy:
-                if process.is_complete():
-                    processes_copy.remove(process)
-                else:
-                    waiting_time = self._curr_turnaround_time
-                    process.set_waiting_time(waiting_time)
-                    self.set_curr_waiting_time(waiting_time)
-
-                    if process._burst >= 4:
-                        turnaround_time = self._curr_waiting_time + process._burst
-                        process.set_turnaround_time(turnaround_time)
-                        self.set_curr_turnaround_time(turnaround_time)
-                    else:
-                        turnaround_time = self._curr_waiting_time + process._burst
-
-        return self
-
 
 class Gantt:
     def __init__(self):
@@ -335,17 +327,162 @@ class Gantt:
     def add_job(self, job: dict):
         self._jobs.append(job)
 
+    def show(self):
+        length = len(self._jobs)
+        flag = False
+        
+        print("-" * 36 + " Gantt Chart " + 36 * "-")
+        
+        # if length > 10:
+        chunk_size = 10
+        num_chunks = (length + chunk_size - 1) // chunk_size
+
+        for chunk_idx in range(num_chunks):
+            start_idx = chunk_idx * chunk_size
+            end_idx = min(length, (chunk_idx + 1) * chunk_size)
+            
+            for i in range(start_idx, end_idx):
+                process_id = self._jobs[i]['process_id']
+                pad = ""
+                
+                if process_id >= 10:
+                    pad = "─"
+                    
+                if i == start_idx:
+                    print("┌────%s────┬" % pad, end="")
+                elif i == end_idx - 1:
+                    print("────%s────┐" % pad)
+                else:
+                    print("────%s────┬" % pad, end="")
+                    
+            for i in range(start_idx, end_idx):
+                process_id = self._jobs[i]['process_id']
+                    
+                if i == start_idx:
+                    print("│   P%s   │" % (process_id), end="")
+                elif i == end_idx - 1:
+                    print("   P%s   │" % (process_id))
+                else:
+                    print("   P%s   │" % (process_id), end="")
+                    
+            for i in range(start_idx, end_idx):
+                process_id = self._jobs[i]['process_id']
+                pad = ""
+                
+                if process_id >= 10:
+                    pad = "─"
+                    
+                if i == start_idx:
+                    print("├────%s────┼" % pad, end="")
+                elif i == end_idx - 1:
+                    print("────%s────┤" % pad)
+                else:
+                    print("────%s────┼" % pad, end="")
+                    
+            for i in range(start_idx, end_idx + 1):
+                if i < end_idx:
+                    process_id = self._jobs[i]['process_id']
+                    
+                    if process_id >= 10:
+                        print("{:<10}".format(self._jobs[i]['waiting_time']), end="")
+                    else:
+                        print("{:<9}".format(self._jobs[i]['waiting_time']), end="")
+                else:
+                    print(self._jobs[i-1]['turnaround_time'])
+
+                # for i in range(start_idx, end_idx):
+                #     if i == 0:
+                #         # print("┌──────┬", end="")
+                #         print("│  P%s  │" % self._jobs[i]['process_id'], end="")
+                #         # print("├──────┼", end="")
+                #     elif i == end_idx - 1:
+                #         # print("──────┐")
+                #         print("  P%s  │" % self._jobs[i]['process_id'])
+                #         # print("──────┤")
+                #     else:
+                #         # print("──────┬", end="")
+                #         print("  P%s  │" % self._jobs[i]['process_id'], end="")
+                #         # print("──────┤", end="")
+                        
+                # for i in range(start_idx, end_idx):
+                #     if i == 0:
+                #         # print("┌──────┬", end="")
+                #         # print("│  %s  │" % "P1", end="")
+                #         print("├──────┼", end="")
+                #     elif i == end_idx - 1:
+                #         # print("──────┐")
+                #         # print("  %s  │" % "P1")
+                #         print("──────┤")
+                #     else:
+                #         # print("──────┬", end="")
+                #         # print("  %s  │" % "P1", end="")
+                #         print("──────┼", end="")
+                
+                
+                # for i in range(start_idx, end_idx + 1):
+                #     if i < end_idx:
+                #         print("{:<7}".format(self._jobs[i]['waiting_time']), end="")
+                #     else:
+                #         print(self._jobs[i-1]['turnaround_time'])  
+                
+            # start_idx = 0
+            # end_idx = 10
+                
+            # while end_idx < length:
+            #     for i in range(start_idx, end_idx):
+            #         if i % 10 == 0:
+            #             print("┌──────┬", end="")
+            #         elif i == end_idx - 1:
+            #             print("──────┐")
+            #         else:
+            #             print("──────┬", end="")
+            #     start_idx = end_idx
+            #     if start_idx + end_idx < length:
+            #         end_idx = start_idx + 10
+            #     else:
+            #         end_idx = length 
+        # else:       
+        #     for i in range(length):
+        #         if i == 0:
+        #             print("┌──────┬", end="")
+        #         elif i == length - 1:
+        #             print("──────┐")
+        #         else:
+        #             print("──────┬", end="")
+                    
+        #     for i in range(length):
+        #         if i == 0:
+        #             print("│  P%s  │" % self._jobs[i]['process_id'], end="")
+        #         elif i == length - 1:
+        #             print("  P%s  │" % self._jobs[i]['process_id'])
+        #         else:
+        #             print("  P%s  │" % self._jobs[i]['process_id'], end="")
+                    
+        #     for i in range(length):
+        #         if i == 0:
+        #             print("├──────┼", end="")
+        #         elif i == length - 1:
+        #             print("──────┤")
+        #         else:
+        #             print("──────┼", end="")
+            
+            
+            # for i in range(length + 1):
+            #     if i < length:
+            #         print("{:<7}".format(self._jobs[i]['waiting_time']), end="")
+            #     else:
+            #         print(self._jobs[i-1]['turnaround_time'])           
+
     def __repr__(self):
         return "%s" % self._jobs
 
 
 def main():
-    # Process 1
     file1 = open('process1.txt', 'r')
     file2 = open('process2.txt', 'r')
     test = open('srpttest2.txt', 'r')
 
-    files = [file1, file2]
+    files = [file2]
 
     for file in files:
         fcfs = FCFS()
@@ -365,9 +502,9 @@ def main():
 
         # fcfs.compute(processes).display()
         # sjf.compute(processes).display()
-        # srpt.compute(processes).display()
+        srpt.compute(processes).display()
         # priority.compute(processes).display()
-        round_robin.compute(processes).display()
+        # round_robin.compute(processes).display()
 
         print()
         file.close()
