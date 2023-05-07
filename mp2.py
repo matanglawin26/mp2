@@ -44,30 +44,11 @@ class Scheduling:
 
     def is_finished(self):
         return all(False if not process.is_complete() else True for process in self._processes)
-        # for process in self._processes:
-        #     if not process.is_complete():
-        #         return False
-
-        # return True
-
-    # def _add_queue(self, job: dict):
-    #     self._queue.append(job)
-    #     self._queue = sorted(self._queue, key=lambda process: process['burst'])
 
     def _remove(self, curr_process: Process):
         for process in self._arrived:
             if process._id == curr_process._id and curr_process.is_complete():
                 self._arrived.remove(process)
-
-    # def _remove2(self, job_id: int):
-    #     for job in self._queue:
-    #         if job['id'] == job_id:
-    #             self._queue.remove(job)
-
-    # def _get_process(self, process_id: int):
-    #     for process in self._processes:
-    #         if process._id == process_id:
-    #             return process
 
     def _get_total_waiting_time(self, process_id: int):
         time_list = []
@@ -93,8 +74,7 @@ class Scheduling:
         return total_time
 
     def display(self):
-        print("═" * 38 + " " + self._title + " " + 38 * "═")
-        print()
+        print("═" * 38 + " " + self._title + " " + 38 * "═", '\n')
         # Display Gantt Chart
         self._gantt.show()
         
@@ -110,11 +90,8 @@ class Scheduling:
         self._average_waiting_time = self._total_waiting_time / len(self._processes)
         self._average_turnaround_time = self._total_turnaround_time / len(self._processes)
 
-        print()
-        print("Average waiting time: %.2f ms" % self._average_waiting_time)
-        print("Average turnaround time: %.2f ms" %
-              self._average_turnaround_time)
-        print("\n")
+        print("\nAverage waiting time: %.2f ms" % self._average_waiting_time)
+        print("Average turnaround time: %.2f ms\n" %self._average_turnaround_time)
 
 class FCFS(Scheduling):
     def __init__(self):
@@ -409,6 +386,5 @@ def main():
         file.close()
 
     return
-
 
 main()
