@@ -222,72 +222,6 @@ class SRPT(Scheduling):
 
         return self
 
-    def compute2(self, processes: list):
-        processes = self.set_processes(processes)
-        processes = sorted(processes, key=lambda process: process._id)
-        self._processes = processes
-
-        curr_process = processes[0]
-        processes = processes[1:]
-
-        for process in processes:
-            if curr_process.is_complete():
-                print("COMPLETE!")
-
-            self._add_queue(
-                {"id": process._id, "burst": process._remaining_time})
-
-            waiting_time = self._curr_turnaround_time
-            self.set_curr_waiting_time(waiting_time)
-
-            curr_remaining_time = curr_process._remaining_time - \
-                (process._arrival - curr_process._arrival)
-
-            if process._remaining_time < curr_remaining_time:
-                curr_process.decrement(
-                    (process._arrival - curr_process._arrival))
-                turnaround_time = self._curr_waiting_time + process._arrival
-                self.set_curr_turnaround_time(turnaround_time)
-                self._remove(process._id)
-                self._add_queue(
-                    {"id": curr_process._id, "burst": curr_process._remaining_time})
-                self._gantt.add_job(
-                    {"process_id": curr_process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time})
-                curr_process = process
-            else:
-                curr_process.decrement()
-
-            print("QUEUE:", self._queue)
-            print("GANTT:", self._gantt)
-
-        while not self.is_finished():
-            waiting_time = self._curr_turnaround_time
-            self.set_curr_waiting_time(waiting_time)
-
-            turnaround_time = self._curr_waiting_time + curr_process._remaining_time
-            self.set_curr_turnaround_time(turnaround_time)
-
-            self._gantt.add_job({"process_id": curr_process._id,
-                                "waiting_time": waiting_time, "turnaround_time": turnaround_time})
-
-            curr_process.decrement(curr_process._remaining_time)
-
-            if len(self._queue):
-                curr_process_id = self._queue[0]['id']
-                curr_process = self._get_process(curr_process_id)
-                self._remove(curr_process._id)
-
-        for process in self._processes:
-            total_waiting_time = self._get_total_waiting_time(
-                process._id) - process._arrival
-            total_turnaround_time = self._get_total_turnaround_time(
-                process._id)
-
-            process.set_waiting_time(total_waiting_time)
-            process.set_turnaround_time(total_turnaround_time)
-
-        return self
-
     def _sort(self, process):
         return (process._remaining_time, process._arrival, process._id)
 
@@ -323,7 +257,50 @@ class Priority(Scheduling):
 class RoundRobin(Scheduling):
     def __init__(self):
         super().__init__()
+        self._clock = 0
+        self._queue = []
         self._quantum = 4
+
+    def compute(self, processes: list):
+        processes = self.set_processes(processes)
+        self._processes = sorted(
+            processes, key=lambda process: process._id)
+        self._queue = sorted(
+            processes, key=lambda process: process._id)
+
+        while len(self._queue) > 0:
+            time = 0
+            curr_process = self._queue[0]
+
+            while time < self._quantum and not curr_process.is_complete():
+                curr_process.decrement()
+                self._clock += 1
+                time += 1
+
+            waiting_time = self._curr_turnaround_time
+            self.set_curr_waiting_time(waiting_time)
+
+            turnaround_time = self._clock
+            self.set_curr_turnaround_time(turnaround_time)
+
+            self._gantt.add_job(
+                {"process_id": curr_process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time})
+
+            if curr_process.is_complete():
+                self._queue.remove(curr_process)
+            else:
+                self._queue.append(self._queue.pop(0))
+
+        for process in self._processes:
+            total_waiting_time = self._get_total_waiting_time(
+                process._id)
+            total_turnaround_time = self._get_total_turnaround_time(
+                process._id)
+
+            process.set_waiting_time(total_waiting_time)
+            process.set_turnaround_time(total_turnaround_time)
+
+        return self
 
     def compute2(self, processes: list):
         self._processes = processes
@@ -388,9 +365,9 @@ def main():
 
         # fcfs.compute(processes).display()
         # sjf.compute(processes).display()
-        srpt.compute(processes).display()
+        # srpt.compute(processes).display()
         # priority.compute(processes).display()
-        # round_robin.compute(processes).display()
+        round_robin.compute(processes).display()
 
         print()
         file.close()
