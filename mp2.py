@@ -51,7 +51,6 @@ class Scheduling:
                 self._arrived.remove(process)
 
     def _get_total_waiting_time(self, process_id: int):
-        time_list = []
         max_turnaround = 0
         burst_time = 0
         
@@ -60,27 +59,11 @@ class Scheduling:
                 if job['turnaround_time'] > max_turnaround:
                     max_turnaround = job['turnaround_time']
                     burst_time = job['burst_time']
-                    
-        # for job in self._gantt.get_jobs():
-        #     if job['process_id'] == process_id:
-        #         time_list.append({ 'waiting_time': job['waiting_time'], 'turnaround_time': job['turnaround_time'] })
-
-        # final_exec = time_list[-1]['waiting_time']
-        # time_list = time_list[:-1]
-        # prior_exec = sum(job['turnaround_time'] - job['waiting_time'] for job in time_list)
 
         return max_turnaround - burst_time
 
     def _get_total_turnaround_time(self, process_id: int):
-        total_time = 0
-        time_list = [job['turnaround_time'] for job in self._gantt.get_jobs() if job['process_id'] == process_id]
-        
-        # for job in self._gantt.get_jobs():
-        #     if job['process_id'] == process_id:
-        #         if job['turnaround_time'] > total_time:
-        #             total_time = job['turnaround_time']
-
-        return max(time_list)
+        return max(job['turnaround_time'] for job in self._gantt.get_jobs() if job['process_id'] == process_id)
 
     def display(self):
         print("═" * 38 + " " + self._title + " " + 38 * "═", '\n')
@@ -366,7 +349,7 @@ class Gantt:
         return "%s" % self._jobs
 
 def main():
-    files = ['process1.txt','process2.txt']
+    files = ['process1.txt']
 
     for file_name in files:
         print("┅" * 38 + " " + file_name + " " + 38 * "┅", "\n")
