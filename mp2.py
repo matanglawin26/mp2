@@ -26,7 +26,7 @@ class Process:
 class Scheduling:
     def __init__(self):
         self._processes = []
-        self._headers = ['Process', 'Arrival', 'CPU Burst Time','Priority', 'Waiting Time', 'Turnaround Time']
+        self._headers = ['Process', 'Arrival', 'CPU Burst Time','Priority', 'Waiting Time (ms)', 'Turnaround Time (ms)']
         self._curr_waiting_time = 0
         self._curr_turnaround_time = 0
         self._total_waiting_time = 0
@@ -65,13 +65,14 @@ class Scheduling:
 
     def _get_total_turnaround_time(self, process_id: int):
         total_time = 0
+        time_list = [job['turnaround_time'] for job in self._gantt.get_jobs() if job['process_id'] == process_id]
+        
+        # for job in self._gantt.get_jobs():
+        #     if job['process_id'] == process_id:
+        #         if job['turnaround_time'] > total_time:
+        #             total_time = job['turnaround_time']
 
-        for job in self._gantt.get_jobs():
-            if job['process_id'] == process_id:
-                if job['turnaround_time'] > total_time:
-                    total_time = job['turnaround_time']
-
-        return total_time
+        return max(time_list)
 
     def display(self):
         print("═" * 38 + " " + self._title + " " + 38 * "═", '\n')
@@ -80,9 +81,9 @@ class Scheduling:
         
         print("-" * 41 + " Table " + 41 * "-")
         
-        print('{:<10} {:<12} {:<18} {:<12} {:<16} {:<20}'.format(*self._headers))
+        print('{:<10} {:<12} {:<18} {:<12} {:<20} {:<24}'.format(*self._headers))
         for process in self._processes:
-            print('{:<10} {:<12} {:<18} {:<12} {:<16} {:<20}'.format(process._id, process._arrival,
+            print('{:<10} {:<12} {:<18} {:<12} {:<20} {:<24}'.format(process._id, process._arrival,
                   process._burst, process._priority, process._waiting_time, process._turnaround_time))
             self._total_waiting_time += process._waiting_time
             self._total_turnaround_time += process._turnaround_time
