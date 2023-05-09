@@ -349,7 +349,7 @@ class Gantt:
         return "%s" % self._jobs
 
 def main():
-    files = ['process1.txt']
+    files = ['process1.txt', 'process2.txt']
 
     for file_name in files:
         print("┅" * 38 + " " + file_name + " " + 38 * "┅", "\n")
