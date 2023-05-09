@@ -52,16 +52,24 @@ class Scheduling:
 
     def _get_total_waiting_time(self, process_id: int):
         time_list = []
-
+        max_turnaround = 0
+        burst_time = 0
+        
         for job in self._gantt.get_jobs():
             if job['process_id'] == process_id:
-                time_list.append({ 'waiting_time': job['waiting_time'], 'turnaround_time': job['turnaround_time'] })
+                if job['turnaround_time'] > max_turnaround:
+                    max_turnaround = job['turnaround_time']
+                    burst_time = job['burst_time']
+                    
+        # for job in self._gantt.get_jobs():
+        #     if job['process_id'] == process_id:
+        #         time_list.append({ 'waiting_time': job['waiting_time'], 'turnaround_time': job['turnaround_time'] })
 
-        final_exec = time_list[-1]['waiting_time']
-        time_list = time_list[:-1]
-        prior_exec = sum(job['turnaround_time'] - job['waiting_time'] for job in time_list)
+        # final_exec = time_list[-1]['waiting_time']
+        # time_list = time_list[:-1]
+        # prior_exec = sum(job['turnaround_time'] - job['waiting_time'] for job in time_list)
 
-        return final_exec - prior_exec
+        return max_turnaround - burst_time
 
     def _get_total_turnaround_time(self, process_id: int):
         total_time = 0
@@ -111,7 +119,7 @@ class FCFS(Scheduling):
             process.set_turnaround_time(turnaround_time)
             self.set_curr_turnaround_time(turnaround_time)
 
-            self._gantt.add_job({ "process_id": process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
+            self._gantt.add_job({ "process_id": process._id, "burst_time": process._burst, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
 
         return self
 
@@ -133,7 +141,7 @@ class SJF(Scheduling):
             process.set_turnaround_time(turnaround_time)
             self.set_curr_turnaround_time(turnaround_time)
 
-            self._gantt.add_job({ "process_id": process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
+            self._gantt.add_job({ "process_id": process._id, "burst_time": process._burst, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
 
         self._processes = sorted(processes, key=lambda process: process._id)
 
@@ -176,7 +184,7 @@ class SRPT(Scheduling):
 
                 self._remove(curr_process)
 
-                self._gantt.add_job({ "process_id": curr_process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
+                self._gantt.add_job({ "process_id": curr_process._id, "burst_time":curr_process._burst, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
 
                 if len(self._arrived) == 0:
                     break
@@ -216,7 +224,7 @@ class Priority(Scheduling):
             process.set_turnaround_time(turnaround_time)
             self.set_curr_turnaround_time(turnaround_time)
 
-            self._gantt.add_job({ "process_id": process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
+            self._gantt.add_job({ "process_id": process._id, "burst_time": process._burst, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
 
         self._processes = sorted(processes, key=lambda process: process._id)
 
@@ -255,7 +263,7 @@ class RoundRobin(Scheduling):
             turnaround_time = self._clock
             self.set_curr_turnaround_time(turnaround_time)
 
-            self._gantt.add_job({ "process_id": curr_process._id, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
+            self._gantt.add_job({ "process_id": curr_process._id, "burst_time":curr_process._burst, "waiting_time": waiting_time, "turnaround_time": turnaround_time })
 
             if curr_process.is_complete():
                 self._queue.remove(curr_process)
