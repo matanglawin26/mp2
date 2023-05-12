@@ -1,3 +1,4 @@
+from termcolor import cprint
 class Process:
     def __init__(self, process_id: int, arrival: int, burst: int, priority: int):
         self._id = process_id
@@ -31,6 +32,8 @@ class Scheduling:
         self._curr_turnaround_time = 0
         self._total_waiting_time = 0
         self._total_turnaround_time = 0
+        self._average_waiting_time = 0
+        self._average_turnaround_time = 0
         self._gantt = Gantt()
 
     def set_processes(self, processes: list):
@@ -44,6 +47,17 @@ class Scheduling:
 
     def is_finished(self):
         return all(False if not process.is_complete() else True for process in self._processes)
+
+    def evaluate(self, algorithms):
+        print("Ranking of Average Waiting Time")
+        for (idx, algorithm) in enumerate(sorted(algorithms, key=lambda a: a._average_waiting_time)):
+            print("%d. %s: %.2f ms" % (idx + 1, algorithm._title, algorithm._average_waiting_time))
+            
+        print("\nRanking of Average Turnaround Time")
+        for (idx, algorithm) in enumerate(sorted(algorithms, key=lambda a: a._average_turnaround_time)):
+            print("%d. %s: %.2f ms" % (idx + 1, algorithm._title, algorithm._average_turnaround_time))
+        
+        return
 
     def _remove(self, curr_process: Process):
         for process in self._arrived:
@@ -81,9 +95,12 @@ class Scheduling:
 
         self._average_waiting_time = self._total_waiting_time / len(self._processes)
         self._average_turnaround_time = self._total_turnaround_time / len(self._processes)
-
-        print("\nAverage waiting time: %.2f ms" % self._average_waiting_time)
-        print("Average turnaround time: %.2f ms\n" %self._average_turnaround_time)
+        print('\n---------------------------------------------------------------------------')
+        print("\nAverage waiting time:", end=' ')
+        cprint("%.2f ms" % self._average_waiting_time, 'cyan')
+        
+        print("Average turnaround time:", end=' ')
+        cprint("%.2f ms\n" %self._average_turnaround_time, 'cyan')
 
 class FCFS(Scheduling):
     def __init__(self):
@@ -142,8 +159,7 @@ class SRPT(Scheduling):
 
     def compute(self, processes: list):
         self._processes = self.set_processes(processes)
-        self._processes = sorted(
-            self._processes, key=lambda process: process._id)
+        self._processes = sorted(self._processes, key=lambda process: process._id)
         curr_process = None
 
         while True:
@@ -217,12 +233,12 @@ class Priority(Scheduling):
         return (process._priority, process._id)
 
 class RoundRobin(Scheduling):
-    def __init__(self):
+    def __init__(self, quantum):
         super().__init__()
         self._title = "Round Robin"
         self._clock = 0
         self._queue = []
-        self._quantum = 4
+        self._quantum = quantum
 
     def compute(self, processes: list):
         processes = self.set_processes(processes)
@@ -349,20 +365,23 @@ class Gantt:
         return "%s" % self._jobs
 
 def main():
-    files = ['process1.txt', 'process2.txt']
+    # files = ['process3.txt']
+    files = ['process1.txt', 'process2.txt', 'process3.txt']
 
     for file_name in files:
         print("┅" * 38 + " " + file_name + " " + 38 * "┅", "\n")
         file = open(file_name, 'r')
         
+        scheduling = Scheduling()
         fcfs = FCFS()
         sjf = SJF()
         srpt = SRPT()
         priority = Priority()
-        round_robin = RoundRobin()
+        round_robin = RoundRobin(2)
 
         processes = []
         file.readline()  # Skip the header
+        
         for line in file:
             if len(line):
                 process_id, arrival, burst, priority_num = map(int, line.split())
@@ -375,6 +394,8 @@ def main():
         priority.compute(processes).display()
         round_robin.compute(processes).display()
 
+        scheduling.evaluate([fcfs, sjf, srpt, priority, round_robin])
+        
         file.close()
 
     return
